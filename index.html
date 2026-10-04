@@ -6,14 +6,14 @@
 <title>Showcase</title>
 <link rel="icon" type="image/png" sizes="64x64" href="showcase-icon-64.png">
 <link rel="apple-touch-icon" href="showcase-icon-180.png">
-<link rel="stylesheet" href="crash-ui/tokens.css?v=33f3f97e3887">
-<link rel="stylesheet" href="inspector.css?v=33f3f97e3887">
-<link rel="stylesheet" href="theme-light.css?v=33f3f97e3887">
-<link rel="stylesheet" href="workbench.css?v=33f3f97e3887">
-<script src="crash-ui/tokens.js?v=33f3f97e3887"></script>
-<script src="icons.js?v=33f3f97e3887"></script>
-<script src="appearance.js?v=33f3f97e3887"></script>
-<script src="workbench.js?v=33f3f97e3887"></script>
+<link rel="stylesheet" href="crash-ui/tokens.css?v=9f9808eb1a48">
+<link rel="stylesheet" href="inspector.css?v=9f9808eb1a48">
+<link rel="stylesheet" href="theme-light.css?v=9f9808eb1a48">
+<link rel="stylesheet" href="workbench.css?v=9f9808eb1a48">
+<script src="crash-ui/tokens.js?v=9f9808eb1a48"></script>
+<script src="icons.js?v=9f9808eb1a48"></script>
+<script src="appearance.js?v=9f9808eb1a48"></script>
+<script src="workbench.js?v=9f9808eb1a48"></script>
 <style>
 /* The games behind the Composer's Layout controls, for looking rather than working:
    pick a game by its icon, pick a device, decide which panels the player sees. Nothing
@@ -79,10 +79,10 @@ body.full #fullscreen{opacity:var(--alpha-scrim)}body.full #fullscreen:hover{opa
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let GAMES=[
  {id:'road',title:'Goat Road'},{id:'boom',title:'Fruit Boom'},{id:'haul',title:'Big Haul'},
- {id:'gold',title:'Goat Gold'},{id:'fuel',title:'Fuel Run'},{id:'market_stack',title:'Market Stack'},{id:'catch',title:'Catch Clash'},{id:'sky_tap_tap',title:'Sky Tap-Tap'},{id:'candy_cascade',title:'Candy Cascade'},{id:'plinko',title:'Plinko'},{id:'mopyon_cascades',title:'Mòpyon Cascades'},
+ {id:'gold',title:'Goat Gold'},{id:'fuel',title:'Fuel Run'},{id:'market_stack',title:'Market Stack'},{id:'catch',title:'Catch Clash'},{id:'sky_tap_tap',title:'Sky Tap-Tap'},{id:'candy_cascade',title:'Candy Cascade'},{id:'plinko',title:'Plinko'},{id:'mopyon_cascades',title:'Mòpyon Cascades'},{id:'hot_hands',title:'Hot Hands'},
  // The same builds with their debug panel (?debug=1), to pick what the next spin plays. Listed
  // whenever the game itself is.
- {id:'candy_cascade_debug',title:'Candy Cascade · Debug',of:'candy_cascade',query:'debug=1'},{id:'mopyon_cascades_debug',title:'Mòpyon Cascades · Debug',of:'mopyon_cascades',query:'debug=1'}
+ {id:'road_debug',title:'Goat Road · Debug',of:'road',query:'debug=1'},{id:'candy_cascade_debug',title:'Candy Cascade · Debug',of:'candy_cascade',query:'debug=1'},{id:'mopyon_cascades_debug',title:'Mòpyon Cascades · Debug',of:'mopyon_cascades',query:'debug=1'}
 ];
 /** The build an entry plays: a debug entry plays its game's. */
 const buildOf=id=>GAMES.find(g=>g.id===id)?.of||id;

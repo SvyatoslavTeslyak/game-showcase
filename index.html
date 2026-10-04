@@ -6,14 +6,14 @@
 <title>Showcase</title>
 <link rel="icon" type="image/png" sizes="64x64" href="showcase-icon-64.png">
 <link rel="apple-touch-icon" href="showcase-icon-180.png">
-<link rel="stylesheet" href="crash-ui/tokens.css?v=9f9808eb1a48">
-<link rel="stylesheet" href="inspector.css?v=9f9808eb1a48">
-<link rel="stylesheet" href="theme-light.css?v=9f9808eb1a48">
-<link rel="stylesheet" href="workbench.css?v=9f9808eb1a48">
-<script src="crash-ui/tokens.js?v=9f9808eb1a48"></script>
-<script src="icons.js?v=9f9808eb1a48"></script>
-<script src="appearance.js?v=9f9808eb1a48"></script>
-<script src="workbench.js?v=9f9808eb1a48"></script>
+<link rel="stylesheet" href="crash-ui/tokens.css?v=4ec875106ccc">
+<link rel="stylesheet" href="inspector.css?v=4ec875106ccc">
+<link rel="stylesheet" href="theme-light.css?v=4ec875106ccc">
+<link rel="stylesheet" href="workbench.css?v=4ec875106ccc">
+<script src="crash-ui/tokens.js?v=4ec875106ccc"></script>
+<script src="icons.js?v=4ec875106ccc"></script>
+<script src="appearance.js?v=4ec875106ccc"></script>
+<script src="workbench.js?v=4ec875106ccc"></script>
 <style>
 /* The games behind the Composer's Layout controls, for looking rather than working:
    pick a game by its icon, pick a device, decide which panels the player sees. Nothing
@@ -62,7 +62,7 @@ body.full #fullscreen{opacity:var(--alpha-scrim)}body.full #fullscreen:hover{opa
 </style>
 <aside id="side">
 <h1><img src="showcase-icon-256.png" alt="" width="30" height="30"><span>Showcase <small>PIXIJS · BROWSER BUILDS</small></span><button id="appearance" type="button" data-appearance-toggle><span data-appearance-icon></span></button><button id="menu" type="button" aria-label="Menu" aria-expanded="true"><i data-icon="menu"></i></button></h1>
-<section class="wb-section"><h2>Game</h2><div class="game-language"><div id="picker"></div><div class="language-row"><span id="language-label">Language</span><div id="language-chips" role="group" aria-labelledby="language-label"><button class="wb-button" type="button" data-language="en" aria-label="English">EN</button><button class="wb-button" type="button" data-language="fr" aria-label="Français">FR</button><button class="wb-button" type="button" data-language="ht" aria-label="Kreyòl ayisyen">CR</button></div></div></div></section>
+<section class="wb-section"><h2>Game</h2><div class="game-language"><div id="picker"></div><div class="language-row"><span id="language-label">Language</span><div id="language-chips" role="group" aria-labelledby="language-label"><button class="wb-button" type="button" data-language="en" aria-label="English">EN</button><button class="wb-button" type="button" data-language="fr" aria-label="Français">FR</button><button class="wb-button" type="button" data-language="ht" aria-label="Kreyòl ayisyen">CR</button></div></div></div><label class="switch" id="debug-row" hidden><input type="checkbox" id="debug"><span>Debug</span></label></section>
 <section class="wb-section"><h2>Device</h2><div id="devices"></div><div id="zoom"></div></section>
 <section class="wb-section"><h2>Look</h2><div id="look"></div></section>
 <section class="wb-section"><h2>Navigation</h2><div id="navigation-presets" class="look-row" role="group" aria-label="Navigation preset"></div></section>
@@ -79,13 +79,12 @@ body.full #fullscreen{opacity:var(--alpha-scrim)}body.full #fullscreen:hover{opa
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let GAMES=[
  {id:'road',title:'Goat Road'},{id:'boom',title:'Fruit Boom'},{id:'haul',title:'Big Haul'},
- {id:'gold',title:'Goat Gold'},{id:'fuel',title:'Fuel Run'},{id:'market_stack',title:'Market Stack'},{id:'catch',title:'Catch Clash'},{id:'sky_tap_tap',title:'Sky Tap-Tap'},{id:'candy_cascade',title:'Candy Cascade'},{id:'plinko',title:'Plinko'},{id:'mopyon_cascades',title:'Mòpyon Cascades'},{id:'hot_hands',title:'Hot Hands'},
- // The same builds with their debug panel (?debug=1), to pick what the next spin plays. Listed
- // whenever the game itself is.
- {id:'road_debug',title:'Goat Road · Debug',of:'road',query:'debug=1'},{id:'candy_cascade_debug',title:'Candy Cascade · Debug',of:'candy_cascade',query:'debug=1'},{id:'mopyon_cascades_debug',title:'Mòpyon Cascades · Debug',of:'mopyon_cascades',query:'debug=1'}
+ {id:'gold',title:'Goat Gold'},{id:'fuel',title:'Fuel Run'},{id:'market_stack',title:'Market Stack'},{id:'catch',title:'Catch Clash'},{id:'sky_tap_tap',title:'Sky Tap-Tap'},{id:'candy_cascade',title:'Candy Cascade'},{id:'plinko',title:'Plinko'},{id:'mopyon_cascades',title:'Mòpyon Cascades'},{id:'hot_hands',title:'Hot Hands'}
 ];
-/** The build an entry plays: a debug entry plays its game's. */
-const buildOf=id=>GAMES.find(g=>g.id===id)?.of||id;
+// The games with a debug panel (?debug=1): one Debug switch under Game, as in Composer.
+const DEBUG_GAMES=['road','boom','candy_cascade','mopyon_cascades'];
+let debug=false;
+const buildOf=id=>id;
 // Which games are listed is chosen by an admin in Composer and read live from Composer Cloud,
 // so a change shows without a deploy. The public publishable key is the one in
 // cloud-config.js (tests keep them equal). Without the database the published
@@ -105,7 +104,7 @@ async function visibleGames(){
 }
 try{
  const visible=await visibleGames();
- GAMES=GAMES.filter(g=>visible.includes(g.of||g.id));
+ GAMES=GAMES.filter(g=>visible.includes(g.id));
 }catch{
  $('#main').textContent='Could not load the game catalog. Please reload the page.';
  $('#side').hidden=true;$('#fullscreen').hidden=true;return;
@@ -133,7 +132,10 @@ function syncControls(){
 // --- state in the address bar, so a link reopens exactly this view -------------------
 function readHash(){
  const p=new URLSearchParams(location.hash.slice(1));
- if(GAMES.some(g=>g.id===p.get('game')))game=p.get('game');
+ // A link to an old "· Debug" entry opens its game with the switch on.
+ const asked=(p.get('game')||'').replace(/_debug$/,'');
+ if(GAMES.some(g=>g.id===asked))game=asked;
+ debug=p.get('debug')==='1'||/_debug$/.test(p.get('game')||'');
  if(Object.hasOwn(presetChoices,p.get('preset')))gamePresets.set(game,p.get('preset'));
  // The showcase always opens on a phone; a device picked before is not carried in the link.
  if(['fit','0.5','0.75','1'].includes(p.get('zoom')))zoom=p.get('zoom');
@@ -145,6 +147,7 @@ function writeHash(){
  const p=new URLSearchParams({game,lang:language});
  if(zoom!=='fit')p.set('zoom',zoom);
  p.set('brand',brand);p.set('theme',theme);p.set('preset',preset());
+ if(debug&&DEBUG_GAMES.includes(game))p.set('debug','1');
  history.replaceState(null,'','#'+p);
 }
 
@@ -160,7 +163,7 @@ function fillGames(){
  picker=Workbench.gamePicker({container:$('#picker'),games:GAMES,value:game,thumb:id=>`icons/${buildOf(id)}.png`,subtitle:changedText,onPick:id=>{game=id;load();if(narrow()){side.classList.add('collapsed');$('#menu').setAttribute('aria-expanded','false')}}});
 }
 function pickShow(){if(picker){picker.value=game;picker.refresh()}}
-const url=()=>{const build=buildOf(game),extra=GAMES.find(g=>g.id===game)?.query;return 'games/'+build+'/'+(revisions[build]?revisions[build]+'/':'')+'index.html?ui-kit=1&lang='+language+'&brand='+encodeURIComponent(brand)+'&theme='+encodeURIComponent(theme)+(extra?'&'+extra:'')};
+const url=()=>{const build=buildOf(game),extra=debug&&DEBUG_GAMES.includes(game)?'debug=1':'';return 'games/'+build+'/'+(revisions[build]?revisions[build]+'/':'')+'index.html?ui-kit=1&lang='+language+'&brand='+encodeURIComponent(brand)+'&theme='+encodeURIComponent(theme)+(extra?'&'+extra:'')};
 let lookCatalog=CrashTokens,lookGame='',loadSequence=0;
 const initialLook=new URLSearchParams(location.hash.slice(1));
 let explicitLook=initialLook.has('brand');
@@ -176,14 +179,15 @@ async function load(){
   if(!Object.hasOwn(lookCatalog.THEMES[brand]||{},theme))theme='';
  }catch{if(sequence!==loadSequence)return;lookCatalog=CrashTokens;if(!Object.hasOwn(lookCatalog.BRANDS,brand)){brand='default';theme=''}}
  lookGame=requestedGame;buildLook();pickShow();syncControls();
- // A switch only one game has is shown only for that game.
- syncControls();
+ // The Debug switch is shown only for the games that have a debug panel.
+ $('#debug-row').hidden=!DEBUG_GAMES.includes(game);$('#debug').checked=debug;
  $('#open').href=url();writeHash();
  // Blank first: a game left running would keep its audio going under the next one.
  frame.src='about:blank';
  setTimeout(()=>{if(sequence===loadSequence)frame.src=url()},60);
 }
 $('#reload').onclick=load;
+$('#debug').onchange=()=>{debug=$('#debug').checked;load()};
 function sendLanguage(){if(frame.src==='about:blank')return;frame.contentWindow?.postMessage({type:'crash-language',locale:language},new URL(frame.src).origin)}
 for(const button of $$('[data-language]'))button.onclick=()=>{language=button.dataset.language;syncLanguageChips();sendLanguage();$('#open').href=url();writeHash()};
 window.addEventListener('message',event=>{if(event.source===frame.contentWindow&&event.origin===new URL(frame.src).origin&&event.data?.type==='crash-language-ready')sendLanguage()});

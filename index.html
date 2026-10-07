@@ -6,14 +6,14 @@
 <title>Showcase</title>
 <link rel="icon" type="image/png" sizes="64x64" href="showcase-icon-64.png">
 <link rel="apple-touch-icon" href="showcase-icon-180.png">
-<link rel="stylesheet" href="crash-ui/tokens.css?v=73540d2b0b8b">
-<link rel="stylesheet" href="inspector.css?v=73540d2b0b8b">
-<link rel="stylesheet" href="theme-light.css?v=73540d2b0b8b">
-<link rel="stylesheet" href="workbench.css?v=73540d2b0b8b">
-<script src="crash-ui/tokens.js?v=73540d2b0b8b"></script>
-<script src="icons.js?v=73540d2b0b8b"></script>
-<script src="appearance.js?v=73540d2b0b8b"></script>
-<script src="workbench.js?v=73540d2b0b8b"></script>
+<link rel="stylesheet" href="crash-ui/tokens.css?v=2da26dda4df8">
+<link rel="stylesheet" href="inspector.css?v=2da26dda4df8">
+<link rel="stylesheet" href="theme-light.css?v=2da26dda4df8">
+<link rel="stylesheet" href="workbench.css?v=2da26dda4df8">
+<script src="crash-ui/tokens.js?v=2da26dda4df8"></script>
+<script src="icons.js?v=2da26dda4df8"></script>
+<script src="appearance.js?v=2da26dda4df8"></script>
+<script src="workbench.js?v=2da26dda4df8"></script>
 <style>
 /* The games behind the Composer's Layout controls, for looking rather than working:
    pick a game by its icon, pick a device, decide which panels the player sees. Nothing
@@ -139,14 +139,16 @@ function readHash(){
  if(Object.hasOwn(presetChoices,p.get('preset')))gamePresets.set(game,p.get('preset'));
  // The showcase always opens on a phone; a device picked before is not carried in the link.
  if(['fit','0.5','0.75','1'].includes(p.get('zoom')))zoom=p.get('zoom');
- if(p.has('brand'))brand=p.get('brand');
+ // A link names the tenant; older links named the brand.
+ if(p.has('tenantId')&&Workbench.brandOfTenant(p.get('tenantId')))brand=Workbench.brandOfTenant(p.get('tenantId'));
+ else if(p.has('brand'))brand=p.get('brand');
  if(p.has('theme'))theme=p.get('theme');
 }
 function writeHash(){
  if(full)return;
  const p=new URLSearchParams({game,lang:language});
  if(zoom!=='fit')p.set('zoom',zoom);
- p.set('brand',brand);p.set('theme',theme);p.set('preset',preset());
+ if(Workbench.tenantOf(brand))p.set('tenantId',Workbench.tenantOf(brand));else p.set('brand',brand);p.set('theme',theme);p.set('preset',preset());
  if(debug&&DEBUG_GAMES.includes(game))p.set('debug','1');
  history.replaceState(null,'','#'+p);
 }
@@ -163,10 +165,10 @@ function fillGames(){
  picker=Workbench.gamePicker({container:$('#picker'),games:GAMES,value:game,thumb:id=>`icons/${buildOf(id)}.png`,subtitle:changedText,onPick:id=>{game=id;load();if(narrow()){side.classList.add('collapsed');$('#menu').setAttribute('aria-expanded','false')}}});
 }
 function pickShow(){if(picker){picker.value=game;picker.refresh()}}
-const url=()=>{const build=buildOf(game),extra=debug&&DEBUG_GAMES.includes(game)?'debug=1':'';return 'games/'+build+'/'+(revisions[build]?revisions[build]+'/':'')+'index.html?ui-kit=1&lang='+language+'&brand='+encodeURIComponent(brand)+'&theme='+encodeURIComponent(theme)+(extra?'&'+extra:'')};
+const url=()=>{const build=buildOf(game),extra=debug&&DEBUG_GAMES.includes(game)?'debug=1':'';return 'games/'+build+'/'+(revisions[build]?revisions[build]+'/':'')+'index.html?ui-kit=1&lang='+language+'&'+(Workbench.tenantOf(brand)?'tenantId='+encodeURIComponent(Workbench.tenantOf(brand)):'brand='+encodeURIComponent(brand))+'&theme='+encodeURIComponent(theme)+(extra?'&'+extra:'')};
 let lookCatalog=CrashTokens,lookGame='',loadSequence=0;
 const initialLook=new URLSearchParams(location.hash.slice(1));
-let explicitLook=initialLook.has('brand');
+let explicitLook=initialLook.has('brand')||initialLook.has('tenantId');
 async function load(){
  const sequence=++loadSequence,requestedGame=game;
  try{
